@@ -8,4 +8,5 @@ public class ColorToLearnData {
 	public string colorName;
 	public byte[] colorRGB;
 	public float timeToLearn;
+	public int colorHexInDec;
 }

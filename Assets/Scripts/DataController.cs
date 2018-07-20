@@ -19,12 +19,10 @@ public class DataController : MonoBehaviour {
 	private static int colorSetNum = 0;
 	
 	private RoundData currentQuestionSet;
-	private PlayerProgress playerProgress;s
+	private PlayerProgress playerProgress;
 
 
 	// Filenames & Pathes
-	private static string this_game_file_name;
-	private static string this_game_data_path;
 	private static string PYTHON_3_PATH  = @"C:\ProgramData\Anaconda3\python.exe";
 	private static string PYTHON_27_32_PATH = @"C:\ProgramData\Anaconda3\pkgs32\python-2.7.15-he216670_0\python.exe";
 	private static string SIGNALS_TRACKER_SERVER_FILE_NAME = @"Backend\CyKITv2\CyKITv2.py";
@@ -32,15 +30,18 @@ public class DataController : MonoBehaviour {
 	private static string MY_COLORS_BACK_MAIN_FILE_NAME = @"Backend\MyColorsBack.py";
 	private static string MY_COLORS_BACK_PATH;
 	private static string BACK_LEARNING_DATA_GENERATION_COMMAND = "GenerateLearningData";
-	private static string BACK_QUESTIONS_DATA_GENERATION_COMMAND = "GenerateQuestionsData";
+	private static string BACK_QUESTIONS_DATA_GENERATION_COMMAND = "GenerateColorsQuestions";
+	//private static string BACK_MEMORIZING_DATA_GENERATION_COMMAND = "GenerateMemoryQuestions";
 	private static string UPDATED_QUESTIONS_DATA_FILE_NAME = "updated_questions_data.json";
 	private static string UPDATED_QUESTIONS_DATA_PATH;
 	private static string UPDATED_LEARNING_DATA_FILE_NAME = "updated_learning_data.json";
 	private static string UPDATED_LEARNING_DATA_PATH;
+	private static string THIS_GAME_FOLDERNAME;
+	private static string THIS_GAME_DATA_PATH;
 	private static string PAST_ANSWERS_FILE_NAME = "past_answers.csv";
 	private static string PAST_ANSWERS_DATA_PATH;
-	//private static string PAST_GAMES_DATA_FOLDER_NAME = @"Past Games";
-	private static string PAST_GAMES_DATA_FOLDER_PATH;
+	private static string PAST_COLORS_FILE_NAME = "past_colors.csv";
+	private static string PAST_COLORS_DATA_PATH;
 	private static string APP_STREAMING_ASSETS_PATH;
 	private static string APP_DATA_PATH;
 	private static string SIGNALS_RECORD = "eeg_record_";
@@ -60,8 +61,8 @@ public class DataController : MonoBehaviour {
 		UPDATED_QUESTIONS_DATA_PATH = Path.Combine(APP_DATA_PATH, UPDATED_QUESTIONS_DATA_FILE_NAME);
 		UPDATED_LEARNING_DATA_PATH = Path.Combine(APP_DATA_PATH, UPDATED_LEARNING_DATA_FILE_NAME);
 		PAST_ANSWERS_DATA_PATH = Path.Combine(APP_DATA_PATH, PAST_ANSWERS_FILE_NAME);
-		PAST_GAMES_DATA_FOLDER_PATH = Path.Combine(APP_DATA_PATH, "");
-		
+		PAST_COLORS_DATA_PATH = Path.Combine(APP_DATA_PATH, PAST_COLORS_FILE_NAME);
+
 		signalsTrackerServerThread = new Thread(new ThreadStart(RunSignalsTrackerServer));
 		signalsTrackerServerThread.Start();	
 		UnityEngine.Debug.Log("Signals Tracker Server should be up and running.");
@@ -88,13 +89,19 @@ public class DataController : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update() {
+		
 		if (Input.GetKey("escape") || errorOccured) {
+			if(errorOccured) {
+				UnityEngine.Debug.LogError("Error Occured");
+			}
+
 			Application.Quit();
 		}
         
 	}
 	
 	private void OnApplicationQuit() {
+		UnityEngine.Debug.Log("System is about to quit..and abort server thread with it.");
 		signalsTrackerServerThread.Abort();
 	}
 
@@ -102,12 +109,13 @@ public class DataController : MonoBehaviour {
 		File.Delete(UPDATED_QUESTIONS_DATA_PATH);
 		File.Delete(UPDATED_LEARNING_DATA_PATH);
 		File.Delete(PAST_ANSWERS_DATA_PATH);
+		File.Delete(PAST_COLORS_DATA_PATH);
 	}
 
 	public void IntializeNewGameDataFiles() {
 		CreateGameCsvFile();
 		CreateAnswersCsvFile();
-		CreateLearnedDataCsvFile();
+		CreatePastColorsCSVFile();
 	}
 
 	public void HandleError() {
@@ -153,7 +161,7 @@ public class DataController : MonoBehaviour {
 		UnityEngine.Debug.Log("Signals Tracker loaded successfully");
 	}
 
-	private static void RunMyColorsBack(string operation) {
+	private void RunMyColorsBack(string operation) {
 		
 		ProcessStartInfo backProcessStartInfo = new ProcessStartInfo(PYTHON_3_PATH);
 		// Making sure that it can read the output from stdout
@@ -174,6 +182,7 @@ public class DataController : MonoBehaviour {
 			string stderr = backProcess.StandardError.ReadToEnd(); // Here are the exceptions from our Python script
 			if (stderr != null && stderr != "")
 				UnityEngine.Debug.LogError("Standard Error from Python Process:\n" + stderr);
+				HandleError();
 			string outputString = reader.ReadToEnd(); // Here is the result of StdOut(for example: print "test")
 			if (outputString != null && outputString != "")
 				UnityEngine.Debug.Log("Output String from Python Process:\n" + outputString);
@@ -198,12 +207,13 @@ public class DataController : MonoBehaviour {
 			currentLearningSet = JsonUtility.FromJson<LearningData>(dataAsJson);
 		} else {
             UnityEngine.Debug.LogError("No learning data found.");
+			HandleError();
 		}
 
 	}
 
 	public void StartRecordingSignals() {
-		signalsTracker.StartRecord(SIGNALS_RECORD + this_game_file_name);
+		signalsTracker.StartRecord(SIGNALS_RECORD + THIS_GAME_FOLDERNAME);
 	}
 
 	public void StopRecordingSignals() {
@@ -221,21 +231,32 @@ public class DataController : MonoBehaviour {
 			currentQuestionSet = loadedData;
 		} else {
             UnityEngine.Debug.LogError("No round data found.");
-
+			HandleError();
 		}
 
 	}
 
 	public void LoadGameData() {
+		LearningPhaseFinished();
 		LoadLearningSet();
+		if(colorSetNum > 5) {
+			UnityEngine.Debug.Log("This was the last load of Learning Sets..Set #" +
+				colorSetNum +" ..Question are about to be Loaded.");
+			Thread loadingGameDataThread = new Thread(new ThreadStart(LoadQuestionsData));
+			loadingGameDataThread.Start();
+		}
+		
+	}
 
-		Thread loadingGameDataThread = new Thread(new ThreadStart(LoadQuestionsData));
-		loadingGameDataThread.Start();
+	private void LearningPhaseFinished() {
+		currentQuestionSet = null;
+		currentLearningSet = null;
+		colorSetNum++;
+		ColorsToCSV();
 	}
 
 	public void GameFinished(ArrayList roundAnswers) {
 		AnswersToCSV(roundAnswers);
-		LearningDataToCSV();
 		this.SaveGameData();
 		currentQuestionSet = null;
 		currentLearningSet = null;
@@ -243,23 +264,19 @@ public class DataController : MonoBehaviour {
 	}
 
 	private void SaveGameData() {
-
-		var csv = new StringBuilder();
-
-		var csvLine = string.Format("ColorName,Red,Blue,Green,timeToLearn");
-		csv.AppendLine(csvLine);
-
-		foreach (ColorToLearnData colorData in currentLearningSet.colorsToLearn) {
-			string colorName = colorData.colorName;
-			byte [] colorRGB = colorData.colorRGB;
-			float timeToLearn = colorData.timeToLearn;
-			csvLine = string.Format("{0},{1},{2},{3}",
-				colorName,colorRGB[0], colorRGB[1], colorRGB[2], timeToLearn);
-			csv.AppendLine(csvLine);  
+		try {
+			string[] allFiles = System.IO.Directory.GetFiles(APP_DATA_PATH);
+			foreach (string file in allFiles) {
+				if (file != THIS_GAME_DATA_PATH) {
+					string fName = file.Substring(APP_DATA_PATH.Length + 1);
+					File.Copy(Path.Combine(APP_DATA_PATH, fName), Path.Combine(THIS_GAME_DATA_PATH, fName), true);
+				}
+			}
+			UnityEngine.Debug.Log("This game data has been saved safely.");
+		} catch (DirectoryNotFoundException dirNotFound) {
+			UnityEngine.Debug.LogError(dirNotFound.Message);
 		}
-
-		UnityEngine.Debug.Log("Game data has been saved in '" + this_game_data_path + "' and if game continued it would be overwritten.");
-		File.AppendAllText(this_game_data_path, csv.ToString());
+		
 	}
 
 	private void CreateGameCsvFile() {
@@ -279,23 +296,29 @@ public class DataController : MonoBehaviour {
 		int nextInt = PlayerPrefs.GetInt("gameID") + 1;
 		PlayerPrefs.SetInt("gameID", nextInt);
 
-		this_game_file_name = name + "_" + age + "_" + PlayerPrefs.GetInt("gameID");  
-		this_game_data_path = Path.Combine(PAST_GAMES_DATA_FOLDER_PATH, this_game_file_name);
-		UnityEngine.Debug.Log("Game data file has been intialized successfully.");
-		File.WriteAllText(this_game_data_path, csv.ToString());
+		THIS_GAME_FOLDERNAME = name + "_" + age + "_" + PlayerPrefs.GetInt("gameID");
+		THIS_GAME_DATA_PATH = Path.Combine(APP_DATA_PATH, THIS_GAME_FOLDERNAME);
+		string this_game_metadata_path = Path.Combine(THIS_GAME_DATA_PATH, THIS_GAME_FOLDERNAME + ".csv");
+		
+		System.IO.Directory.CreateDirectory(THIS_GAME_DATA_PATH);
+		UnityEngine.Debug.Log("This game data folder has been intialized successfully.");
+		
+		File.WriteAllText(this_game_metadata_path, csv.ToString());
+		UnityEngine.Debug.Log("This game data metadata saved.");
 
 	}
+
 	private void CreateAnswersCsvFile() {
 		var csv = new StringBuilder();
 		var newLine = string.Format("ColorName,Red,Blue,Green,isCorrect");
 		csv.AppendLine(newLine);  
 		File.WriteAllText(PAST_ANSWERS_DATA_PATH, csv.ToString());
 	}
-	private void CreateLearnedDataCsvFile() {
+	private void CreatePastColorsCSVFile() {
 		var csv = new StringBuilder();
 		var newLine = string.Format("ColorName,Red,Blue,Green,timeToLearn");
 		csv.AppendLine(newLine);  
-		File.WriteAllText(PAST_ANSWERS_DATA_PATH, csv.ToString());
+		File.WriteAllText(PAST_COLORS_DATA_PATH, csv.ToString());
 	}
 	private void AnswersToCSV(ArrayList roundAnswers) {
 		var csv = new StringBuilder();
@@ -311,19 +334,22 @@ public class DataController : MonoBehaviour {
 
 		File.AppendAllText(PAST_ANSWERS_DATA_PATH, csv.ToString());
 	}
-	private void LearningDataToCSV() {
+	private void ColorsToCSV() {
 		var csv = new StringBuilder();
-		var newLine = ""; 
+		var csvLine = "";
+		
 		foreach (ColorToLearnData colorData in currentLearningSet.colorsToLearn) {
 			string colorName = colorData.colorName;
 			byte [] colorRGB = colorData.colorRGB;
 			float timeToLearn = colorData.timeToLearn;
-			newLine = string.Format("{0},{1},{2},{3}",
-				colorName,colorRGB[0], colorRGB[1], colorRGB[2], timeToLearn);
-			csv.AppendLine(newLine);  
+			int colorHexInDec = colorData.colorHexInDec;
+			csvLine = string.Format("{0},{1},{2},{3},{4}",
+				colorHexInDec, colorName,colorRGB[0], colorRGB[1], colorRGB[2], timeToLearn);
+			csv.AppendLine(csvLine);  
 		}
 
-		File.AppendAllText(PAST_ANSWERS_DATA_PATH, csv.ToString());
+		File.AppendAllText(PAST_COLORS_DATA_PATH, csv.ToString());
+
 	}
 
 	public void SetPlayerProgressData(string name, int age, bool genderMale) {
@@ -351,7 +377,7 @@ public class DataController : MonoBehaviour {
 	public bool isLearning() {
 		return learningOn;
 	}
-	public LearningData GetcurrentLearningSet() {
+	public LearningData GetCurrentLearningSet() {
 		return currentLearningSet;
 	}
 
@@ -365,6 +391,6 @@ public class DataController : MonoBehaviour {
 		return currentLearningSet != null;
 	}
 	public void setLearning(bool learningOrNot) {
-		learning = learningOrNot;
+		learningOn = learningOrNot;
 	}
 }

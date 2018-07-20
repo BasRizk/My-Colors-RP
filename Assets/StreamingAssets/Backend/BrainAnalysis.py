@@ -3,6 +3,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import statsmodels.formula.api as sm
 import sys
 
 from DataManager import get_learning_raw_data, get_brain_signals_data
@@ -15,7 +16,7 @@ def get_colors_by_analyzing_past_learning_data(verbose = False):
         
     X, y = match_colors_as_signals(recent_signals, recent_learned_colors)
     y  = y.reshape(-1,1)
-    X = backward_eliminate_features(X, y)
+    X = backward_eliminate_features(X, y, 0.05, 'pValues+rSquared')
     
     # Feature Scaling
     from sklearn.preprocessing import StandardScaler
@@ -57,13 +58,13 @@ def get_colors_by_analyzing_past_learning_data(verbose = False):
     original_predicted_colors = get_colors_back(predictions)
     
     reversed_support_vectors = reverse_distribution(support_vectors)
-    reversed_support_vectors =\
-        remove_redundancies_with(reversed_support_vectors, np.round(support_vectors,decimals = 2))
-    predictions = sc_y.inverse_transform(regressor.predict(reversed_support_vectors))
+    reversed_support_vectors_cleared =\
+        remove_redundancies_with(reversed_support_vectors, support_vectors)
+    predictions = sc_y.inverse_transform(regressor.predict(reversed_support_vectors_cleared))
     reverse_predicted_colors = get_colors_back(predictions)
     
     new_balancing_colors = remove_color_redundancies_with(reverse_predicted_colors, original_predicted_colors)
-    
+    #past_colors = get_colors_back(recent_learned_colors)
 
     #print('SVR duel_coef_ = ',regressor.dual_coef_)
     #print('SVR support_ = ',regressor.support_)
@@ -112,15 +113,15 @@ def get_colors_back(predictions):
 def reverse_distribution(X):
     X_to_be_used = X
     reversed_vectors = []
-    print('\n')
     
+    print('\n')
     num_of_vectors = len(X_to_be_used)
-    for i in range():
+    for i in range(num_of_vectors):
         reversed_vectors.append(_reverse_distribute_1d_array(X_to_be_used[i]))
         sys.stdout.write("Reverse Distribution Progress: %d%%   \r" % ((i//num_of_vectors)*100) )
         sys.stdout.flush()
         
-    return np.array(reversed_vectors).reshape(-1,4)
+    return np.array(reversed_vectors).reshape(-1,len(X_to_be_used[0]))
 
 def _reverse_distribute_1d_array(array_1d):
     vector_len = len(array_1d)
@@ -218,7 +219,7 @@ def match_signals_as_colors(recent_signals, recent_learned_colors):
     
     readings_per_color = len(recent_signals)//len(recent_learned_colors)
 
-    prev_X = recent_signals.iloc[:,[(i+1) for i in range(0,28,2)]].values
+    prev_X = recent_signals.iloc[:,[i for i in range(2,16)]].values
     
     if len(prev_X) > readings_per_color*len(recent_learned_colors):
         prev_X = prev_X[:-(len(prev_X) - (readings_per_color*len(recent_learned_colors))),:]
@@ -242,64 +243,107 @@ def match_colors_as_signals(recent_signals, recent_learned_colors):
     
     readings_per_color = len(recent_signals)//len(recent_learned_colors)
     
-    X = recent_signals.iloc[:,[(i+1) for i in range(0,28,2)]].values
+    x = recent_signals.iloc[:,[i for i in range(2,16)]].values
     y = np.repeat(recent_learned_colors, readings_per_color, axis = 0)
     
-    if len(X) > len(y):
-        X = X[:-(len(X) - len(y)),:]
+    if len(x) > len(y):
+        x = x[:-(len(x) - len(y)),:]
         
-    return X,y
+    return x,y
 
-def backward_eliminate_features(X, y):
+def backward_eliminate_features(x, y, sl, mode = 'pValues+rSquared'):
+    if mode == 'pValues+rSquared':
+        return backward_eliminate_using_pValues_rSquared(x, y, sl)
+    else:   # mode = 'p-values'
+        return backward_eliminate_using_pValues(x, y, sl)
+        
+def backward_eliminate_using_pValues(x, y, sl):
+    numVars = len(x[0])
+    for i in range(0, numVars):
+        regressor_OLS = sm.OLS(y, x).fit()
+        maxVar = max(regressor_OLS.pvalues).astype(float)
+        if maxVar > sl:
+            for j in range(0, numVars - i):
+                if (regressor_OLS.pvalues[j].astype(float) == maxVar):
+                    x = np.delete(x, j, 1)
+    regressor_OLS.summary()
+    return x
+
+def backward_eliminate_using_pValues_rSquared(x, y, SL):
     """
     Return the features variable, after optimization using Backward Elimination
     
     -- Statically Done here --> to be automated
     
-    :param X - features variable
+    :param x - features variable
     :param y - output variable
     """
     
-    # Building the optimal model using Backward Elimination
-    import statsmodels.formula.api as sm
-    X = np.append(arr = np.ones((len(X),1)).astype(int), values = X, axis = 1)
+    numVars = len(x[0])
+    temp = np.zeros((len(x),numVars)).astype(int)
+    for i in range(0, numVars):
+        regressor_OLS = sm.OLS(y, x).fit()
+        maxVar = max(regressor_OLS.pvalues).astype(float)
+        adjR_before = regressor_OLS.rsquared_adj.astype(float)
+        if maxVar > SL:
+            for j in range(0, numVars - i):
+                if (regressor_OLS.pvalues[j].astype(float) == maxVar):
+                    temp[:,j] = x[:, j]
+                    x = np.delete(x, j, 1)
+                    tmp_regressor = sm.OLS(y, x).fit()
+                    adjR_after = tmp_regressor.rsquared_adj.astype(float)
+                    if (adjR_before >= adjR_after):
+                        x_rollback = np.hstack((x, temp[:,[0,j]]))
+                        x_rollback = np.delete(x_rollback, j, 1)
+                        print (regressor_OLS.summary())
+                        return x_rollback
+                    else:
+                        continue
+                    
+    regressor_OLS.summary()
+    return x
     
-    #Step 2
-    X_opt = X[:, :]
-    # OLS = Ordinary Least Squares
-    regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
-    regressor_OLS.summary()
-    
-    X_opt = X[:, [0,1,2,4,5,6,7,8,9,10,11,12,13]]
-    regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
-    regressor_OLS.summary()
-    X_opt = X[:, [0,1,2,4,5,7,8,9,10,11,12,13]]
-    regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
-    regressor_OLS.summary()
-    X_opt = X[:, [0,1,2,4,5,8,9,10,11,12,13]]
-    regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
-    regressor_OLS.summary()
-    X_opt = X[:, [0,2,7,8,9,10,11,12,13]]
-    regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
-    regressor_OLS.summary()
-    X_opt = X[:, [0,1,2,7,9,10,11,13]]
-    regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
-    regressor_OLS.summary()
-    X_opt = X[:, [0,1,2,7,9,10,11]]
-    regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
-    regressor_OLS.summary()
-    X_opt = X[:, [0,2,9,10,11,12,13]]
-    regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
-    regressor_OLS.summary()
-    X_opt = X[:, [0,2,9,10,11,13]]
-    regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
-    regressor_OLS.summary()
-    X_opt = X[:, [0,2,9,10,11]]
-    regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
-    regressor_OLS.summary()
+"""
+# Building the optimal model using Backward Elimination
+import statsmodels.formula.api as sm
+X = np.append(arr = np.ones((len(X),1)).astype(int), values = X, axis = 1)
 
-    return X_opt[:,1:]
-    
+#Step 2
+X_opt = X[:, :]
+# OLS = Ordinary Least Squares
+regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
+regressor_OLS.summary()
+
+X_opt = X[:, [0,1,2,4,5,6,7,8,9,10,11,12,13]]
+regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
+regressor_OLS.summary()
+X_opt = X[:, [0,1,2,4,5,7,8,9,10,11,12,13]]
+regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
+regressor_OLS.summary()
+X_opt = X[:, [0,1,2,4,5,8,9,10,11,12,13]]
+regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
+regressor_OLS.summary()
+X_opt = X[:, [0,2,7,8,9,10,11,12,13]]
+regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
+regressor_OLS.summary()
+X_opt = X[:, [0,1,2,7,9,10,11,13]]
+regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
+regressor_OLS.summary()
+X_opt = X[:, [0,1,2,7,9,10,11]]
+regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
+regressor_OLS.summary()
+X_opt = X[:, [0,2,9,10,11,12,13]]
+regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
+regressor_OLS.summary()
+X_opt = X[:, [0,2,9,10,11,13]]
+regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
+regressor_OLS.summary()
+X_opt = X[:, [0,2,9,10,11]]
+regressor_OLS = sm.OLS(endog = y, exog = X_opt).fit()
+regressor_OLS.summary()
+
+return X_opt[:,1:]
+"""
     
     
 def visualizing_the_clusters(regressor, support_vectors, y_hc, num_of_features):

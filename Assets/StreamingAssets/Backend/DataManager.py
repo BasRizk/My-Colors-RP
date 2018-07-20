@@ -96,7 +96,7 @@ def get_brain_signals_data():
     list_ = []
     for file_ in allFiles:
         print('Reading file ..', file_, '..')
-        df = pd.read_csv(file_,index_col=None, header=0)
+        df = pd.read_csv(file_, index_col=None, skiprows=[0], header=None)
         list_.append(df)
     frame = pd.concat(list_, sort=True)
     return frame
