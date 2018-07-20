@@ -9,15 +9,11 @@ An educative system about colors, acting as a research project that aims to incr
     
     https://github.com/meodai/color-names
     
-*-Emokit
+*-CyKITv2 "with very few changes"
     
-    https://github.com/openyou/emokit
+    https://github.com/CymatiCorp/CyKITv2/tree/master/Python
     
     
 # Notes:
 
--- **Colors-Names** may or may not be set to work online, two base urls (Online & Offline) can be found in **ColorsRequest** Module in "**Assets/StreamingAssets/ColorsRequests.py**".
-
--- **Emokit** and the Brain Signals aquisation module through the "**Emotiv Epoc+**" device has **NOT** been added yet to the online repo.
-
--- To be added is the ML Model for the manipulation of the sensors readings with the Colors.
+-- **Colors-Names** may or may not be set to work online, two base urls (Online & Offline) can be found in **ColorsRequest** Module in "**Assets/StreamingAssets/Backend/ColorsRequests.py**".
