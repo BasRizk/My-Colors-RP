@@ -7,11 +7,25 @@ public class AnswerButton : MonoBehaviour {
 
 	public Text answerText;
 	private AnswerData answerData;
-	private GameController gameController;
+	private QuestioningController questioningController;
+
+	private bool answered = false;
 
 	// Use this for initialization
 	void Start () {
-		gameController = FindObjectOfType<GameController>();
+		questioningController = FindObjectOfType<QuestioningController>();
+	}
+
+	void Update() {
+		if(answered) {
+			if(answerData.isCorrect) {
+				this.GetComponent<Image>().color = new Color32(answerData.colorRGB[0],
+																	answerData.colorRGB[1],
+																	answerData.colorRGB[2],
+																	255);
+			}
+		}
+		
 	}
 
 	public void Setup(AnswerData data) {
@@ -27,6 +41,9 @@ public class AnswerButton : MonoBehaviour {
 	}
 	
 	public void HandleClick() {
-		gameController.AnswerButtonClicked(answerData);
+		if(answerData.isCorrect) {
+			answered = true;
+		}
+		questioningController.AnswerButtonClicked(answerData);
 	}
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -27,9 +28,10 @@ public class LearningController : MonoBehaviour {
 
 	private void InitLearningData() {
 
-		while(!dataController.isLearningDataLoaded());
+		while(!dataController.isLearningSetLoaded());
+		
 		learningQueue = new ArrayList();
-		learningQueue.AddRange(dataController.GetCurrentLearningData().colorsToLearn);
+		learningQueue.AddRange(dataController.GetCurrentLearningSet().colorsToLearn);
 		dataController.setLearning(true);
 	}
 	
@@ -45,11 +47,21 @@ public class LearningController : MonoBehaviour {
 				timeRemaining = colorToLearnData.timeToLearn;
 				UpdateScreenForNewColor(colorToLearnData);
 			} else {
-				//blackFader.FadeToScreen("Game");
+				//blackFader.FadeToScreen("Questioning");
+				UnityEngine.Debug.Log("Game Ended at " + DateTime.Now.ToString("h:mm:ss tt"));
+
 				dataController.setLearning(false);
-				SceneManager.LoadScene("Game");
+
+				// TODO make learnging consists of phases
+				EndALearningPhase();
+
+				SceneManager.LoadScene("Questioning");
 			}
 		}
+	}
+
+	private void EndALearningPhase() {
+		dataController.StopRecordingSignals();
 	}
 
 	private void UpdateScreenForNewColor(ColorToLearnData LearningData) {

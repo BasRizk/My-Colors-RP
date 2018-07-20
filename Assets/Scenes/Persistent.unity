@@ -153,30 +153,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02ec695e02840b74fbd9611d4f5d3cfc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  allRoundData:
-  - name: Round 1
-    timeLimitInSeconds: 30
-    pointsAddedForCorrectAnswer: 10
-    questions:
-    - questionText: Is Sky blue?
-      answers:
-      - answerText: Yes
-        isCorrect: 1
-      - answerText: No
-        isCorrect: 0
-    - questionText: What do frogs eat?
-      answers:
-      - answerText: Fish
-        isCorrect: 1
-      - answerText: Pizza
-        isCorrect: 0
-      - answerText: Doritos
-        isCorrect: 0
-    - questionText: Where do birds live?
-      answers:
-      - answerText: On Moon
-        isCorrect: 0
-      - answerText: On Land
-        isCorrect: 1
-      - answerText: In The Sea
-        isCorrect: 0

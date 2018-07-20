@@ -219,7 +219,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.034323532, y: 0.06875001}
   m_AnchorMax: {x: 0.9766765, y: 0.534375}
-  m_AnchoredPosition: {x: 0.5040002, y: 3.9506989}
+  m_AnchoredPosition: {x: 0.50403, y: 23}
   m_SizeDelta: {x: -1.008, y: 13.6048}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &257103825
@@ -1035,7 +1035,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1400487573
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1051,8 +1051,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.034323532, y: 0.55625004}
   m_AnchorMax: {x: 0.9766765, y: 0.89375013}
-  m_AnchoredPosition: {x: 0.49998, y: -7.7188}
-  m_SizeDelta: {x: -1, y: -22.9}
+  m_AnchoredPosition: {x: 0, y: 2.359}
+  m_SizeDelta: {x: -360, y: -43.118}
   m_Pivot: {x: 0.5, y: 0.49999997}
 --- !u!114 &1400487574
 MonoBehaviour:
@@ -1075,7 +1075,7 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 12800000, guid: d576135e173ac2744a0629b65df897c5, type: 3}
-    m_FontSize: 42
+    m_FontSize: 18
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 0
@@ -1142,31 +1142,6 @@ MonoBehaviour:
   roundEndDisplay: {fileID: 477088392}
   nextRoundBtn: {fileID: 1697527620}
   highScoreDisplay: {fileID: 1142443446}
-  dataController: {fileID: 0}
-  questionPool: []
-  isRoundActive: 0
-  loadingLearningData: 0
-  timeRemaining: 0
-  playerScore: 0
-  questionIndex: 0
-  answerButtonGameObjects: []
-  questionDisplayBackgroundColor:
-    r: 0
-    g: 0
-    b: 0
-    a: 0
-  colorMultiplier: 0
-  loadingBtnTextDefaultColor:
-    r: 0
-    g: 0
-    b: 0
-    a: 0
-  CURRENT_PLAYER_SCORE_PREF: currentPlayerScore
-  currentRoundData:
-    name: 
-    timeLimitInSeconds: 0
-    pointsAddedForCorrectAnswer: 0
-    questions: []
 --- !u!1 &1644660565
 GameObject:
   m_ObjectHideFlags: 0

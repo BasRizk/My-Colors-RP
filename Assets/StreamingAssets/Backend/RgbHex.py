@@ -1,24 +1,34 @@
+# -*- coding: utf-8 -*-
 # Module to hold RGB & Hex Conversions
     
 def rgb_to_hex(red, green, blue):
+    """
+    Returns a 6 digit hex string converted fom rgb values.
+    """
     return dec_to_hex(red) + dec_to_hex(green) + dec_to_hex(blue)
 
 def dec_to_hex(decimal):
+    """
+    Returns a hex (at least 2 digits) value converted from decimal value.
+    """
     if decimal < 16:
-        return '0' + get_hex_digit(decimal)
-    return dec_to_hex_helper(decimal)
+        return '0' + _get_hex_digit(decimal)
+    return _dec_to_hex_helper(decimal)
     
-def dec_to_hex_helper(decimal):
+def _dec_to_hex_helper(decimal):
     if decimal < 16:
-        return get_hex_digit(decimal)
+        return _get_hex_digit(decimal)
     
     hex_div = decimal // 16
     hex_reminder = decimal % 16
     
     if hex_reminder >= 0:
-        return dec_to_hex_helper(hex_div) + get_hex_digit(hex_reminder)
+        return _dec_to_hex_helper(hex_div) + _get_hex_digit(hex_reminder)
 
-def get_hex_digit(hex_decimal):
+def _get_hex_digit(hex_decimal):
+    """
+    Returns a hex digit converted from a decimal number between 1 and 15.
+    """
     hex_digits = {
             '15' : 'F',
             '14' : 'E',

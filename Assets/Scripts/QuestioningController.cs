@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 using System.Threading;
 using System.Collections;
 
-public class GameController : MonoBehaviour {
+public class QuestioningController : MonoBehaviour {
 	
 	public SimpleObjectPool answerButtonObjectPool;
 	public Text questionText;
@@ -27,7 +27,6 @@ public class GameController : MonoBehaviour {
 	
 	private int questionIndex;
 	private List<GameObject> answerButtonGameObjects = new List<GameObject>();
-	
 
 	// Constants
 	private Color questionDisplayBackgroundColor;
@@ -38,10 +37,9 @@ public class GameController : MonoBehaviour {
 	private Color loadingBtnTextDefaultColor;
 	private string CURRENT_PLAYER_SCORE_PREF = "currentPlayerScore";
 
-
 	// Current Round Data and Results
-	private RoundData currentRoundData;
-	private ArrayList currentRoundAnswers;
+	private RoundData currentQuestionSet;
+	private ArrayList currentAnswers;
 	private static bool created = false;
 
 	void Start () {
@@ -69,13 +67,15 @@ public class GameController : MonoBehaviour {
 		scoreDisplayText.text = playerScore.ToString();
 
 		loadingLearningData = true;
-		while(!dataController.isRoundDataLoaded() && !dataController.isLearning());
+		while(!dataController.isQuestionSetLoaded() && !dataController.isLearning());
+		
 		questionDisplay.SetActive(true);
 		roundEndDisplay.SetActive(false);
 		loadingLearningData = false;
-		currentRoundData = dataController.GetCurrentRoundData();
-		currentRoundAnswers = new ArrayList();
-		questionPool = currentRoundData.questions;
+
+		currentQuestionSet = dataController.GetCurrentQuestionSet();
+		currentAnswers = new ArrayList();
+		questionPool = currentQuestionSet.questions;
 		
 		ResetTimeRemainingDisplay();
 		UpdateTimeRemainingDisplay();
@@ -98,7 +98,10 @@ public class GameController : MonoBehaviour {
 			//PlayWithQuestionDisplayColors();
 
 			if(timeRemaining <= 0f) {
-				EndRound();
+				//EndRound();
+				//AnswerData nullifiedAnswerData= new AnswerData("");
+				//AnswerButtonClicked(nullifiedAnswerData);
+				NextQuestionOrEndRound();
 			}
 		} else {
 			if (loadingLearningData){
@@ -107,14 +110,14 @@ public class GameController : MonoBehaviour {
 				nextRoundBtn.GetComponentInChildren<Text>().color =
 					new Color(loadingBtnTextColor.r, loadingBtnTextColor.g, loadingBtnTextColor.b, Mathf.PingPong(Time.time, 1));
 
-				if(dataController.isLearningDataLoaded()) {
+				if(dataController.isLearningSetLoaded()) {
 					nextRoundBtn.enabled = true;
 					nextRoundBtn.GetComponentInChildren<Text>().text = NEXT_ROUND_STATEMENT;
 					loadingLearningData = false;
 					nextRoundBtn.GetComponentInChildren<Text>().color = loadingBtnTextDefaultColor;
 
 				}
-			} else if (!dataController.isLearningDataLoaded()) {
+			} else if (!dataController.isLearningSetLoaded()) {
 				loadingLearningData = true;
 				Thread loadingGameDataThread = new Thread(new ThreadStart(LoadNewRoundData));
 				loadingGameDataThread.Priority = System.Threading.ThreadPriority.Highest;
@@ -129,12 +132,12 @@ public class GameController : MonoBehaviour {
 
 	public void AnswerButtonClicked(AnswerData answer) {
 		if(answer.isCorrect) {
-			playerScore += currentRoundData.pointsAddedForCorrectAnswer;
+			playerScore += currentQuestionSet.pointsAddedForCorrectAnswer;
 			scoreDisplayText.text = playerScore.ToString();
 
 		}
 
-		currentRoundAnswers.Add(answer);
+		currentAnswers.Add(answer);
 
 		NextQuestionOrEndRound();
 		
@@ -168,13 +171,13 @@ public class GameController : MonoBehaviour {
 		roundEndDisplay.SetActive(true);
 
 		nextRoundBtn.enabled = false;
-		dataController.GameFinished(currentRoundAnswers);
+		dataController.GameFinished(currentAnswers);
 		ClearPastRoundCache();
 
 	}
 
 	private void ClearPastRoundCache() {
-		currentRoundAnswers.Clear();
+		currentAnswers.Clear();
 	}
 
 	private void LoadNewRoundData() {
@@ -219,7 +222,7 @@ public class GameController : MonoBehaviour {
 	}
 
 	private void ResetTimeRemainingDisplay() {
-		timeRemaining = currentRoundData.timeLimitInSeconds;
+		timeRemaining = currentQuestionSet.timeLimitInSeconds;
 	}
 
 	public void ReturnToMenu() {

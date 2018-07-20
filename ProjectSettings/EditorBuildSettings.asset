@@ -15,5 +15,5 @@ EditorBuildSettings:
     path: Assets/Scenes/Learning.unity
     guid: c70e67658b55cc143b660ed99f255c44
   - enabled: 1
-    path: Assets/Scenes/Game.unity
+    path: Assets/Scenes/Questioning.unity
     guid: 188b68a119128f640badc00acc1f2339
