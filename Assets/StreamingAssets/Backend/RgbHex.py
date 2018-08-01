@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
 # Module to hold RGB & Hex Conversions
-    
+"""
+ 
 def rgb_to_hex(red, green, blue):
     """
     Returns a 6 digit hex string converted fom rgb values.

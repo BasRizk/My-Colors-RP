@@ -4,7 +4,6 @@
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 from RgbHex import rgb_to_hex
-#from BrainAnalysis import get_colors_by_analyzing_past_learning_data
 
 import json
 import random
@@ -66,8 +65,39 @@ def _request_colors(colors_in_hex):
     else:
         return None
 
+def get_colors_back(hexInDecColors):
+    request_list = []
+    for i in hexInDecColors:
+        request_list.append(_validate_hex_color(i))
+        
+    predicted_colors = _request_colors(_colors_request_string(request_list))['colors']
+    
+    unique_predicted_colors = []
+    for color_a in predicted_colors:
+        color_added = False
+        for color_b in unique_predicted_colors:
+            if color_a['name'] == color_b['name']:
+                color_added = True
+                break
+        if not color_added:
+            unique_predicted_colors.append(color_a)
+   
+    return unique_predicted_colors
+
+def _validate_hex_color(color_value):
+    """
+    Converts & validates a correct and clean hex value for colors
+    
+    :param color_value - decimal value for color
+    """
+    hexColorValue = str(hex(int(color_value))).replace('0x','')
+    while(len(hexColorValue) != 6):
+        hexColorValue = "0" + hexColorValue
+    
+    return hexColorValue
+
 def list_of_colors(num_of_colors = 10, mechanism = 'random',
-                      rgb = (128,128,128), distance = 15):
+                      rgb = (128,128,128), distance = 15, existing_colors = None):
     """
     Returns a list of colors in json format coming from Colors-Nams API.
     
@@ -82,16 +112,47 @@ def list_of_colors(num_of_colors = 10, mechanism = 'random',
     """
     if mechanism == 'random-close':
         colors_json = random_close_list_of_colors(rgb, distance, num_of_colors)
-    #elif mechanism == 'eeg-reverse':
-        #colors_json = get_colors_by_analyzing_past_learning_data()
-    else:   # random
+    elif mechanism == 'eeg-reverse':
+        from BrainAnalysis import get_colors_by_brain_analysis
+        colors_json = get_colors_by_brain_analysis(verbose=False)
+    elif mechanism == 'random':
         colors_json = get_random_colors(num_of_colors)
+    else:
+        colors_json = get_other_than_colors(num_of_colors, existing_colors)
 
     if colors_json is None:
         print ('[!] Request FAILED')
         return None
 
     return colors_json
+
+def get_other_than_colors(num_of_colors, existing_colors):
+    """
+    Returns random new set of colors other than the existing ones
+    """
+    
+    if not existing_colors:
+        return None
+    existing_colors_hex_list = []
+    for i in existing_colors:
+        existing_colors_hex_list.append(hex(i['colorHexInDec']))
+    new_colors_hex_list = []
+    for i in num_of_colors:
+        red = int(random.random()*256)
+        green = int(random.random()*256)
+        blue = int(random.random()*256)
+        hex_color = rgb_to_hex(red, green, blue)
+        if hex_color not in existing_colors_hex_list:
+            new_colors_hex_list.append(hex_color)
+
+    hex_colors_request = _colors_request_string(new_colors_hex_list)
+    colors_json = _request_colors(hex_colors_request)
+
+    if colors_json is not None:
+        return colors_json['colors']
+    return None
+
+        
 
 def random_close_list_of_colors(rgb, distance = 15, num_of_colors = 10):
     """

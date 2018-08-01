@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
+"""
 # A module to handle all Learning Colors data creations & manipulations
+"""
+
 from ColorsRequests import list_of_colors
-from DataManager import create_json_file, get_past_learned_colors_path
-from BrainAnalysis import get_colors_by_analyzing_past_learning_data
+from DataManager import create_json_file, get_past_learned_colors_path, append_to_past_colors
+#from BrainAnalysis import get_colors_by_analyzing_past_learning_data
 
 import random
 import os.path
@@ -15,8 +18,9 @@ def generate_learning_data(num_of_colors = 10, timeToLearn_default = 5):
     print('Learning Data to be generated.')
     
     learning_data = {}
-    learning_data['colorsToLearn'] = _list_of_learning_data(num_of_colors, timeToLearn_default)
+    learning_data['colorsToLearn'], past_colors_exist = _list_of_learning_data(num_of_colors, timeToLearn_default)
     create_json_file('updated_learning_data.json', learning_data)
+    append_to_past_colors(learning_data['colorsToLearn'], past_colors_exist)
     
     print('LEARNING_GENERATION_COMPLETED')
 
@@ -32,17 +36,20 @@ def _list_of_learning_data(num_of_colors, timeToLearn_default):
     past_colors_path = get_past_learned_colors_path()
 
     if os.path.exists(past_colors_path):
-        #colors_json = list_of_colors(num_of_colors, mechanism = 'eeg-reverse')
         print('Colors generation by "eeg-reverse" mechanism')
-        colors_json = get_colors_by_analyzing_past_learning_data()
+        colors_json = list_of_colors(num_of_colors, mechanism = 'eeg-reverse')
+        #colors_json = get_colors_by_analyzing_past_learning_data()
+        colors_json = colors_json[:num_of_colors]
         random.shuffle(colors_json)
+        past_colors_exist = True
     else:
         print('Colors generation by "random" mechanism')
         colors_json = list_of_colors(num_of_colors, mechanism = 'random')
+        past_colors_exist = False
     
     if colors_json is not None:
         _make_ready_for_learning(colors_json, num_of_colors, timeToLearn_default)
-    return colors_json
+    return colors_json, past_colors_exist
 
 #### TODO ANALYSE AND ADD TIMING DIFFS
 def _make_ready_for_learning(colors_json, num_of_colors, timeToLearn_default = 20):

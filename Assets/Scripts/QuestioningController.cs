@@ -33,7 +33,7 @@ public class QuestioningController : MonoBehaviour {
 	private int colorMultiplier;
 	private const int OBAQUE_VALUE = 255;
 	private readonly string LOADING_STATEMENT = "Loading...";
-	private readonly string NEXT_ROUND_STATEMENT = "Next Round";
+	//private readonly string NEXT_ROUND_STATEMENT = "Next Round";
 	private Color loadingBtnTextDefaultColor;
 	private string CURRENT_PLAYER_SCORE_PREF = "currentPlayerScore";
 
@@ -67,7 +67,7 @@ public class QuestioningController : MonoBehaviour {
 		scoreDisplayText.text = playerScore.ToString();
 
 		loadingLearningData = true;
-		while(!dataController.isQuestionSetLoaded() && !dataController.isLearning());
+		while(!dataController.isQuestionSetLoaded() || !dataController.isLearning());
 		
 		questionDisplay.SetActive(true);
 		roundEndDisplay.SetActive(false);
@@ -104,8 +104,9 @@ public class QuestioningController : MonoBehaviour {
 				NextQuestionOrEndRound();
 			}
 		} else {
+			/*
 			if (loadingLearningData){
-				
+		 
 				Color loadingBtnTextColor = nextRoundBtn.GetComponentInChildren<Text>().color;
 				nextRoundBtn.GetComponentInChildren<Text>().color =
 					new Color(loadingBtnTextColor.r, loadingBtnTextColor.g, loadingBtnTextColor.b, Mathf.PingPong(Time.time, 1));
@@ -123,7 +124,7 @@ public class QuestioningController : MonoBehaviour {
 				loadingGameDataThread.Priority = System.Threading.ThreadPriority.Highest;
 				loadingGameDataThread.Start();
 			}
-			
+			*/
 		}
 		
 		

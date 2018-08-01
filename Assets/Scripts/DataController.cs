@@ -16,10 +16,12 @@ public class DataController : MonoBehaviour {
 
 	private LearningData currentLearningSet;
 	private bool learningOn;
-	private static int colorSetNum = 0;
 	
 	private RoundData currentQuestionSet;
 	private PlayerProgress playerProgress;
+
+	public int colorSetNum = 0;
+	public int MAX_NUM_OF_PHASES = 3;
 
 
 	// Filenames & Pathes
@@ -31,7 +33,6 @@ public class DataController : MonoBehaviour {
 	private static string MY_COLORS_BACK_PATH;
 	private static string BACK_LEARNING_DATA_GENERATION_COMMAND = "GenerateLearningData";
 	private static string BACK_QUESTIONS_DATA_GENERATION_COMMAND = "GenerateColorsQuestions";
-	//private static string BACK_MEMORIZING_DATA_GENERATION_COMMAND = "GenerateMemoryQuestions";
 	private static string UPDATED_QUESTIONS_DATA_FILE_NAME = "updated_questions_data.json";
 	private static string UPDATED_QUESTIONS_DATA_PATH;
 	private static string UPDATED_LEARNING_DATA_FILE_NAME = "updated_learning_data.json";
@@ -40,7 +41,7 @@ public class DataController : MonoBehaviour {
 	private static string THIS_GAME_DATA_PATH;
 	private static string PAST_ANSWERS_FILE_NAME = "past_answers.csv";
 	private static string PAST_ANSWERS_DATA_PATH;
-	private static string PAST_COLORS_FILE_NAME = "past_colors.csv";
+	private static string PAST_COLORS_FILE_NAME = "past_colors.json";
 	private static string PAST_COLORS_DATA_PATH;
 	private static string APP_STREAMING_ASSETS_PATH;
 	private static string APP_DATA_PATH;
@@ -67,9 +68,8 @@ public class DataController : MonoBehaviour {
 		signalsTrackerServerThread.Start();	
 		UnityEngine.Debug.Log("Signals Tracker Server should be up and running.");
 
-		signalsTracker = new SignalsTrackerConnection(this);
+		signalsTracker = new SignalsTrackerConnection();
 		signalsTracker.ConnectToTcpServer();
-
 
 		ClearPreviousCachedData();
 		UnityEngine.Debug.Log("All Previous cached data have been deleted successfully.");
@@ -115,7 +115,7 @@ public class DataController : MonoBehaviour {
 	public void IntializeNewGameDataFiles() {
 		CreateGameCsvFile();
 		CreateAnswersCsvFile();
-		CreatePastColorsCSVFile();
+		//CreatePastColorsCSVFile();
 	}
 
 	public void HandleError() {
@@ -182,7 +182,7 @@ public class DataController : MonoBehaviour {
 			string stderr = backProcess.StandardError.ReadToEnd(); // Here are the exceptions from our Python script
 			if (stderr != null && stderr != "")
 				UnityEngine.Debug.LogError("Standard Error from Python Process:\n" + stderr);
-				HandleError();
+				//HandleError();
 			string outputString = reader.ReadToEnd(); // Here is the result of StdOut(for example: print "test")
 			if (outputString != null && outputString != "")
 				UnityEngine.Debug.Log("Output String from Python Process:\n" + outputString);
@@ -213,7 +213,7 @@ public class DataController : MonoBehaviour {
 	}
 
 	public void StartRecordingSignals() {
-		signalsTracker.StartRecord(SIGNALS_RECORD + THIS_GAME_FOLDERNAME);
+		signalsTracker.StartRecord(SIGNALS_RECORD + THIS_GAME_FOLDERNAME + "_" + colorSetNum);
 	}
 
 	public void StopRecordingSignals() {
@@ -236,10 +236,19 @@ public class DataController : MonoBehaviour {
 
 	}
 
+	public void LoadNextPhase() {
+		LearningPhaseFinished();
+		StopRecordingSignals();
+		if(colorSetNum < MAX_NUM_OF_PHASES) {
+			StartRecordingSignals();
+		}
+		LoadGameData();
+	}
+
 	public void LoadGameData() {
 		LearningPhaseFinished();
 		LoadLearningSet();
-		if(colorSetNum > 5) {
+		if(colorSetNum == MAX_NUM_OF_PHASES) {
 			UnityEngine.Debug.Log("This was the last load of Learning Sets..Set #" +
 				colorSetNum +" ..Question are about to be Loaded.");
 			Thread loadingGameDataThread = new Thread(new ThreadStart(LoadQuestionsData));
@@ -252,7 +261,6 @@ public class DataController : MonoBehaviour {
 		currentQuestionSet = null;
 		currentLearningSet = null;
 		colorSetNum++;
-		ColorsToCSV();
 	}
 
 	public void GameFinished(ArrayList roundAnswers) {

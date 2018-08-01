@@ -10,16 +10,18 @@ using UnityEngine;
 public class SignalsTrackerConnection{
 
 	#region private members 	
-	private DataController dataController;
+	//private DataController dataController;
 	private TcpClient socketConnection; 
 	private Thread clientReceiveThread; 
 	private string ip_address = "localhost";
 	private int port_num = 18000;	
 
+	/*
 	public SignalsTrackerConnection(DataController appDataController) {
-		dataController = appDataController;
+		//dataController = appDataController;
 	}
-	//
+	*/
+
 	//private float timeoutAfter;
 	#endregion  	
 
@@ -28,24 +30,26 @@ public class SignalsTrackerConnection{
 	/// </summary> 	
 	public void ConnectToTcpServer () { 		
 		try {  			
+			Thread.Sleep(1000);
 			socketConnection = new TcpClient();
 			UnityEngine.Debug.Log("socketConnection TcpClient has been created.");
 			
 			socketConnection.Connect(ip_address, port_num);
 			UnityEngine.Debug.Log("socketConnection TcpClient has connected.");
-			SendMessage("Test Connection");
-			clientReceiveThread = new Thread (new ThreadStart(ListenForData)); 			
-			clientReceiveThread.IsBackground = true; 			
-			clientReceiveThread.Start();
 	
-		} catch (Exception e) { 			
+		} catch (Exception e) {
 			UnityEngine.Debug.Log("On client connect exception " + e);
 		} finally {
 			if(isConnected()){
-			UnityEngine.Debug.Log("Signals Tracker has been connected successfully.");
+				UnityEngine.Debug.Log("Signals Tracker has been connected successfully.");
+				SendMessage("Test Connection");
+				clientReceiveThread = new Thread (new ThreadStart(ListenForData)); 			
+				clientReceiveThread.IsBackground = true; 			
+				clientReceiveThread.Start();
 			} else {
-				UnityEngine.Debug.Log("Signals Tracker failed to connect with server.");
-				dataController.HandleError();
+				UnityEngine.Debug.Log("Signals Tracker failed to connect with server..will try again.");
+				ConnectToTcpServer();
+				//dataController.HandleError();
 			}
 		}
 

@@ -43,6 +43,7 @@ public class LearningController : MonoBehaviour {
 		
 		if(timeRemaining <= 0f) {
 			if(learningQueue.Count > 0) {
+				UnityEngine.Debug.Log("learningQueue.Count = " + learningQueue.Count.ToString());
 				ColorToLearnData colorToLearnData = (ColorToLearnData) learningQueue[0];
 				learningQueue.RemoveAt(0);
 				timeRemaining = colorToLearnData.timeToLearn;
@@ -50,8 +51,7 @@ public class LearningController : MonoBehaviour {
 				
 				if (learningQueue.Count == 1) {
 					UnityEngine.Debug.Log("A Learning Phase Ended at " + DateTime.Now.ToString("h:mm:ss tt"));
-					EndALearningPhase();
-					
+				
 					Thread endALearningPhaseThread = new Thread(new ThreadStart(EndALearningPhase));
 					endALearningPhaseThread.Start();
 				}
@@ -60,7 +60,7 @@ public class LearningController : MonoBehaviour {
 				//blackFader.FadeToScreen("Questioning");
 				UnityEngine.Debug.Log("Game Ended at " + DateTime.Now.ToString("h:mm:ss tt"));
 
-				dataController.setLearning(true);
+				dataController.setLearning(false);
 				SceneManager.LoadScene("Questioning");
 		
 			}
@@ -68,8 +68,7 @@ public class LearningController : MonoBehaviour {
 	}
 
 	private void EndALearningPhase() {
-		dataController.StopRecordingSignals();
-		dataController.LoadGameData();
+		dataController.LoadNextPhase();
 		learningQueue.AddRange(dataController.GetCurrentLearningSet().colorsToLearn);
 	}
 

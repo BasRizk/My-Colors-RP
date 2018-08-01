@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
 # Module to handle Answers data compuations
+"""
 
-import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 
 def get_centroid_of_answers(filepath):
@@ -21,7 +21,7 @@ def get_centroid_of_answers(filepath):
     from sklearn.cluster import KMeans
     kmeans = KMeans(n_clusters = 1, init = 'k-means++', max_iter = 300, 
                     n_init = 10, random_state = 0)
-    y_kmeans = kmeans.fit_predict(X)
+    kmeans.fit_predict(X)
         
     request_red = int(kmeans.cluster_centers_[:, 0][0])
     request_green = int(kmeans.cluster_centers_[:, 1][0])
