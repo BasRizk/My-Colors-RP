@@ -9,6 +9,12 @@ EditorBuildSettings:
     path: Assets/Scenes/Persistent.unity
     guid: 85796b4a86a659842978328b2fa88323
   - enabled: 1
+    path: Assets/Scenes/Loading.unity
+    guid: f004f7f4537b63741820b12ff8a8a0e7
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 1
     path: Assets/Scenes/MenuScreen.unity
     guid: e6c8cff9e89245f4db85bfa6fcd69e3e
   - enabled: 1
@@ -17,3 +23,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Questioning.unity
     guid: 188b68a119128f640badc00acc1f2339
+  - enabled: 1
+    path: Assets/Scenes/SessionSummary.unity
+    guid: a4033dd07d072134da2f5669fd234b4f
+  m_configObjects: {}

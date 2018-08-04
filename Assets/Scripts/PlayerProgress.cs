@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerProgress {
+public class PlayerPersonalData {
 
 	public string playerName;
-	public bool gender;
+	public string gender;
 	public int age;
 	public int highestScore;
 }

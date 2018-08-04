@@ -57,6 +57,7 @@ class MyIO():
         self.samplingRate = 128
         self.channels = 40
         self.f = None
+        self.eegLogsDirectory = "EEG-Logs"
         
     def onData(self, uid, text):
         print '@eeg -- onData(), text ==', str(text.split(":::"))
@@ -97,7 +98,8 @@ class MyIO():
                 self.recordFile = str(ioCommand[2])
                 
                 ## @basem addition to ensure path as program may run from far away
-                directory = os.path.dirname('./Assets/StreamingAssets/EEG-Logs')
+                #directory = os.path.dirname('self.eegLogsDirectory')
+                directory = self.eegLogsDirectory
                 if not os.path.exists(directory):
                     os.makedirs(directory)
                 
@@ -108,13 +110,18 @@ class MyIO():
                     while os.path.exists(pathFinder):
                         self.recordInc += 1
                         self.recordFile = self.recordFile + "-" + str(self.recordInc)
-                        pathFinder = './EEG-Logs/' + self.recordFile + '.csv'
+                        #pathFinder = './EEG-Logs/' + self.recordFile + '.csv'
+                        pathFinder = directory + self.recordFile + '.csv'
                         print "[Record: File exists. Changing to: " + self.recordFile + ".csv ]"
                 except:
+                    print 'file does not exist; to be created'
                     pass
                 try:
-                    self.f = file('./EEG-Logs/' + self.recordFile + '.csv', 'a')
-                    self.f = open('./EEG-Logs/' + self.recordFile + '.csv', 'a')
+                    #self.f = file('./EEG-Logs/' + self.recordFile + '.csv', 'a')
+                    #self.f = open('./EEG-Logs/' + self.recordFile + '.csv', 'a')
+                    
+                    self.f = file(pathFinder, 'a')
+                    self.f = open(pathFinder, 'a')
                     
                     csvHeader = ""
                     csvHeader += "title: " + self.recordFile + ", "
@@ -155,7 +162,6 @@ class MyIO():
                     f_size = self.f.tell()
                     #print "xxx:" + str(self.f.read(2))
                     self.f.truncate((f_size -2))
-                    
                     
                 except Exception, msg:
                     print "Error: " + str(msg)

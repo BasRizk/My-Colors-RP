@@ -19,18 +19,16 @@ public class MenuScreenController : MonoBehaviour {
 	void Start() {
 		dataController = FindObjectOfType<DataController>();
 	}
-	void Update() {
-		
-	}
 
 	public void StartGame() {
 
 		string playerName = nameField.text;
-		bool genderMale = gender.text == "Male";
+		//bool genderMale = gender.text == "Male";
+		string playerGender = gender.text;
 		int playerAge = 0;
 		Int32.TryParse(age.text, out playerAge);
 
-		dataController.SetPlayerProgressData(playerName, playerAge, genderMale);
+		dataController.SetPlayerPersonalData(playerName, playerAge, playerGender);
 		dataController.IntializeNewGameDataFiles();
 		dataController.StartRecordingSignals();
 

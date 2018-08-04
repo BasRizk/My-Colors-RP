@@ -9,7 +9,7 @@ from DataManager import create_json_file, get_past_colors
 import random
 
 def generate_questioning_data(num_of_questions = 10, time_limit = 20,
-                              points_added_for_correct_answer = 10, mode):
+                              points_added_for_correct_answer = 10, mode = 'Memory'):
     """
     Generate a JSON file having questions of type memory based on recent
     Learned data.
@@ -55,18 +55,18 @@ def _list_of_memory_questions(colors_json, num_of_questions, ratio):
     
     list_of_questions = []
     for i in range(num_of_correct):
-        question_data = _construct_memory_question_data(color_json[i], isCorrect = True)
+        question_data = _construct_memory_question_data(colors_json[i], isCorrect = True)
         list_of_questions.append(question_data)
     for i in range(num_of_questions - num_of_correct):
-        weird_color_json = getRandomColors(5)
+        weird_color_json = get_random_colors(5)
         question_data = _construct_memory_question_data(weird_color_json, isCorrect = False)
         
 def _construct_memory_question_data(color_json, isCorrect):
-    return {'colorName': colors_json['colorName'],
-            'colorRGB' : colors_json['colorRGB'],
+    return {'colorName': color_json['colorName'],
+            'colorRGB' : color_json['colorRGB'],
             'isCorrect' : isCorrect }
      
-def _list_of_colors_names_questions(colors_json, num_of_questions =-1, mode):
+def _list_of_color_names_questions(colors_json, num_of_questions =-1):
     """
     Returns a list of Color-Names questions based on given JSON format set of colors.
     
@@ -82,7 +82,7 @@ def _list_of_colors_names_questions(colors_json, num_of_questions =-1, mode):
 
     list_of_questions = []     
     for i in range(num_of_questions):
-        question_data = _construct_question_data(colors_json[i])
+        question_data = _construct_color_names_question_data(colors_json[i])
         list_of_questions.append(question_data)
 
     return list_of_questions
@@ -126,7 +126,7 @@ def _generate_color_names_answers(question_data):
         return None
         
     for i in range(len(random_colors)):
-        answer_data = _construct_answer_data(random_colors[i], isCorrect = False)
+        answer_data = _construct_color_names_answer_data(random_colors[i], isCorrect = False)
         question_data['answers'].append(answer_data)
         
     random.shuffle(question_data['answers'])

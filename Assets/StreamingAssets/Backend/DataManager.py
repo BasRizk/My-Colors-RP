@@ -11,6 +11,34 @@ import pandas as pd
 import numpy as np
 import csv
 
+def get_vectors(vectors_type = 'reversed-vectors'):
+    data_path = _create_data_path("")
+    if vectors_type == 'reversed-vectors':
+        allFiles = glob.glob(data_path + "/reversed_vectors_*.csv")
+    else:   # support_vectors
+        allFiles = glob.glob(data_path + "/support_vectors_*.csv")
+        
+    allFiles.sort()
+    frame = pd.DataFrame()
+    list_ = []
+    for file_ in allFiles:
+        print('Reading file ..', file_, '..')
+        df = pd.read_csv(file_, index_col=None, skiprows=[], header=None)
+        list_.append(df)
+    frame = pd.concat(list_, sort=True)
+    return frame
+
+def document_recent_file_with(name, data):
+    
+    file_num = 0
+    filename = name + "_" + file_num + ".csv"
+    data_path = _create_data_path(name + "_" + file_num + ".csv")
+    while(os.path.exists(data_path)):
+        file_num +=1
+        filename = name + "_" + file_num + ".csv"
+        data_path = _create_data_path(name + "_" + file_num + ".csv")
+        
+    return create_csv_file(filename, data)
 
 def create_csv_file(filename, data):
     data_path = _create_data_path(filename)
@@ -95,6 +123,7 @@ def get_past_colors():
 def get_brain_signals_data():
     data_path = _get_brain_signals_data_path()
     allFiles = glob.glob(data_path + "/*.csv")
+    allFiles.sort()
     frame = pd.DataFrame()
     list_ = []
     for file_ in allFiles:
@@ -104,7 +133,7 @@ def get_brain_signals_data():
     frame = pd.concat(list_, sort=True)
     return frame
 
-def _append_to_past_colors(colors_json, past_colors_exist):
+def append_to_past_colors(colors_json, past_colors_exist):
     if not past_colors_exist:
         create_json_file('past_colors.json', colors_json)
     else:

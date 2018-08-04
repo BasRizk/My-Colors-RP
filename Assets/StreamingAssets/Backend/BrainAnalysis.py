@@ -6,10 +6,12 @@ import matplotlib.pyplot as plt
 import statsmodels.formula.api as sm
 import sys
 
-from DataManager import get_learning_raw_data, get_brain_signals_data
+from DataManager import get_learning_raw_data, get_brain_signals_data, document_recent_file_with, get_vectors, create_json_file
 from ColorsRequests import get_colors_back  
 
-def analyze_past_learning_data(verbose = False):
+signals_labels = ['F3','FC5','AF3','F7','T7','P7','O1','O2','P8','T8','F8','AF4','FC6','F4']
+
+def analyze_past_learning_data(num_of_support_vectors = 5, verbose = False):
     
     recent_signals = get_brain_signals_data()
     recent_learned_colors = get_learning_raw_data()
@@ -33,7 +35,8 @@ def analyze_past_learning_data(verbose = False):
     #   as their are some boundaries, but it still decreases the number of support_vectors
     #   to a good value
     from sklearn.svm import NuSVR
-    regressor = NuSVR(kernel = 'rbf', verbose = True)
+    print('--nu = num_of_support_vectors/len(X), num_of_support_vectors = ', num_of_support_vectors, 'and len(x) = ', len(X))
+    regressor = NuSVR(kernel = 'rbf', nu = (num_of_support_vectors/len(X)), verbose = True)
     regressor.fit(X, y)
 
     support_vectors = regressor.support_vectors_
@@ -51,14 +54,14 @@ def analyze_past_learning_data(verbose = False):
         
     return regressor, sc_X, sc_y, recent_signals, recent_learned_colors
 
-def get_colors_by_brain_analysis(verbose=False):
+def get_colors_by_brain_analysis(num_of_colors, verbose=False):
     # Applying some random function to some feather blowing on their values to
     # flat_for(support_vectors, lambda x: x + random.randint(-1*int(x*0.1),int(x*0.1)))
     # predict after that a new set of colors
     
     # TODO use the mode reverse distribution algorithm after and verbose
     # the opposition of values on graph
-    regressor, sc_X, sc_y, recent_signals, recent_learned_colors = analyze_past_learning_data(verbose)
+    regressor, sc_X, sc_y, recent_signals, recent_learned_colors = analyze_past_learning_data(num_of_colors,verbose)
     support_vectors = regressor.support_vectors_
     
     predictions = sc_y.inverse_transform(regressor.predict(support_vectors))
@@ -83,8 +86,86 @@ def get_colors_by_brain_analysis(verbose=False):
         print('Balancing Colors observed seems to be very few')
         new_balancing_colors = reverse_predicted_colors
     
+    document_analysis_data(reversed_support_vectors, new_balancing_colors)
+    
     return new_balancing_colors
 
+def document_analysis_data(support_vectors, reversed_support_vectors):
+    document_recent_file_with("support_vectors", support_vectors)
+    document_recent_file_with("reversed_vectors", reversed_support_vectors)
+
+def calculate_errors():
+    support_vectors_groups = get_vectors(vectors_type = 'support-vectors')
+    reversed_vectors_groups = get_vectors(vectors_type = 'reversed-vectors')
+    
+    error_values_diff_abs = 0
+    error_values_diff_rev = 0
+    error_values_diff_sup = 0
+    num_of_diff_vectors = 0
+    num_of_diff_values = 0
+    
+    num_of_reversed_vectors = 0
+    
+    accumlative_errors_per_identical_vector = []
+
+    # LOOP OVER ALL GROUPS
+    for i in range(len(reversed_vectors_groups)):
+        # TAKING ONE GROUP AT A TIME
+        a_rev_vectors_group = reversed_vectors_groups[i]
+        a_supp_vectors_group = support_vectors_groups[i+1]
+        num_of_reversed_vectors += a_rev_vectors_group.size
+        
+        one_accumlative_error_per_identical_vector = 0
+        
+        # TAKING ONE VECTOR AT A TIME
+        for vector_num in len(a_rev_vectors_group):
+            a = a_rev_vectors_group[vector_num]
+            b = a_supp_vectors_group[vector_num]
+            num_of_diff_values += (a != b).sum()
+            values_diff_rev = 0
+            values_diff_sup = 0
+            values_diff_abs = 0
+            sum_rev_vector_values = 0
+            sum_sup_vector_values = 0
+            
+            for value_num in len(a):
+                value_a = a[value_num]
+                value_b = b[value_num]
+                values_diff_abs += abs(value_a - value_b)
+                values_diff_rev += value_a - value_b
+                values_diff_sup += value_b - value_a
+                sum_rev_vector_values += value_a
+                sum_sup_vector_values += value_b
+                
+            error_values_diff_abs += (values_diff_abs/float(min(sum_rev_vector_values, sum_sup_vector_values)))
+            error_values_diff_rev += (values_diff_rev/float(sum_rev_vector_values))
+            error_values_diff_sup += (values_diff_sup/float(sum_sup_vector_values))
+            
+        one_accumlative_error_per_identical_vector = num_of_diff_values/float(a_rev_vectors_group)
+        accumlative_errors_per_identical_vector.append(one_accumlative_error_per_identical_vector)
+        
+        num_of_diff_vectors += (a_rev_vectors_group != a_supp_vectors_group).sum()
+    
+    one_vector_size = a_rev_vectors_group[0].size
+    
+    error_vectors_diff = num_of_diff_vectors/float(num_of_reversed_vectors)
+    error_values_per_identical_vector = num_of_diff_values/float(num_of_reversed_vectors*one_vector_size)
+    error_values_diff_abs /= float(num_of_reversed_vectors)
+    error_values_diff_rev /= float(num_of_reversed_vectors)
+    error_values_diff_sup /= float(num_of_reversed_vectors)
+    
+    all_errors = {
+            "NumOfDifferentVectors"    : num_of_diff_vectors,
+            "NumOfReversedVectors"     : num_of_reversed_vectors,
+            "VectorsDiffError"    : error_vectors_diff,
+            "ValuesDiffAbsError"  : error_values_diff_abs,
+            "ValuesDiffRevError"  : error_values_diff_rev,
+            "ValuesDiffSupError"  : error_values_diff_sup,
+            "ValuesIdenticalPerVectorError" : error_values_per_identical_vector,
+            "AccumlativeErrorsPerIdenticalVector" : accumlative_errors_per_identical_vector}
+     
+    create_json_file("session_errors.json", all_errors)
+    
 def remove_color_redundancies_with(a, b):
     no_redunancies_here = []
     for i in a:

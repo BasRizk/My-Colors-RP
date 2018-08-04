@@ -23,7 +23,10 @@ ip_address = "localhost"
 port_num = 18000
 model_num = 5
 parameters = "info+nocounter+format-0+generic"
+directory = sys.argv[1]
 sys.argv = [sys.argv[0], ip_address, port_num, model_num, parameters]
+
+print('Directory of EEG-Logs to be used = ', directory)
 
 arg_count = len(sys.argv)
 
@@ -72,19 +75,21 @@ if arg_count == 1 or arg_count > 5 or sys.argv[1] == "help" or sys.argv[1] == "-
     sys.argv = [sys.argv[0], "127.0.0.1", "55555", "1", ""]
     
     
-if arg_count < 5:
+if arg_count < 6:
     
     if arg_count == 2:
-        sys.argv = [sys.argv[0], sys.argv[1], "55555", "1", ""]
+        sys.argv = [sys.argv[0], sys.argv[1], "55555", "1", "", "EEG-Logs"]
     if arg_count == 3:
-        sys.argv = [sys.argv[0], sys.argv[1], sys.argv[2], "1", ""]
+        sys.argv = [sys.argv[0], sys.argv[1], sys.argv[2], "1", "", "EEG-Logs"]
     if arg_count == 4:
-        sys.argv = [sys.argv[0], sys.argv[1], sys.argv[2], sys.argv[3], ""]
+        sys.argv = [sys.argv[0], sys.argv[1], sys.argv[2], sys.argv[3], "", "EEG-Logs"]
+    if arg_count == 5:
+        sys.argv = [sys.argv[0], sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], "EEG-Logs"]
    
     
    
 def main(CyINIT):
-
+    
     print str(sys.argv)
     
     parameters = str(sys.argv[4]).lower()
@@ -96,6 +101,7 @@ def main(CyINIT):
     HOST = str(sys.argv[1])
     PORT = int(sys.argv[2])
     MODEL = int(sys.argv[3])
+    DIRECTORY = directory
     
     # Initialize CyKIT 
     if CyINIT == 2:
@@ -104,6 +110,7 @@ def main(CyINIT):
         print "> Trying Key Model #: " + str(MODEL)
 
         myi = eeg.MyIO()
+        myi.eegLogsDirectory = DIRECTORY
         
         if "noheader" in parameters:
             myi.setHeader(True)

@@ -114,7 +114,7 @@ def list_of_colors(num_of_colors = 10, mechanism = 'random',
         colors_json = random_close_list_of_colors(rgb, distance, num_of_colors)
     elif mechanism == 'eeg-reverse':
         from BrainAnalysis import get_colors_by_brain_analysis
-        colors_json = get_colors_by_brain_analysis(verbose=False)
+        colors_json = get_colors_by_brain_analysis(num_of_colors, verbose=False)
     elif mechanism == 'random':
         colors_json = get_random_colors(num_of_colors)
     else:

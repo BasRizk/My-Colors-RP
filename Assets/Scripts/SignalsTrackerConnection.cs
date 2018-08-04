@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using NUnit.Framework;
 using UnityEngine;
 
 public class SignalsTrackerConnection{
@@ -15,6 +14,7 @@ public class SignalsTrackerConnection{
 	private Thread clientReceiveThread; 
 	private string ip_address = "localhost";
 	private int port_num = 18000;	
+	public int maxTries = 5;
 
 	/*
 	public SignalsTrackerConnection(DataController appDataController) {
@@ -28,6 +28,12 @@ public class SignalsTrackerConnection{
 	/// <summary> 	
 	/// Setup socket connection. 	
 	/// </summary> 	
+
+	public void AbortThreads() {
+		socketConnection.Close();
+		clientReceiveThread.Abort();
+		maxTries = 0;
+	}
 	public void ConnectToTcpServer () { 		
 		try {  			
 			Thread.Sleep(1000);
@@ -46,7 +52,8 @@ public class SignalsTrackerConnection{
 				clientReceiveThread = new Thread (new ThreadStart(ListenForData)); 			
 				clientReceiveThread.IsBackground = true; 			
 				clientReceiveThread.Start();
-			} else {
+			} else if(maxTries > 0) {
+				maxTries--;
 				UnityEngine.Debug.Log("Signals Tracker failed to connect with server..will try again.");
 				ConnectToTcpServer();
 				//dataController.HandleError();

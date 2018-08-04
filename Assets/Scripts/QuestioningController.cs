@@ -21,20 +21,18 @@ public class QuestioningController : MonoBehaviour {
 	private QuestionData[] questionPool;
 
 	private bool isRoundActive;
-	private bool loadingLearningData;
 	private float timeRemaining;
 	private int playerScore;
 	
 	private int questionIndex;
 	private List<GameObject> answerButtonGameObjects = new List<GameObject>();
 
-	// Constants
+	// Manipulation Values
 	private Color questionDisplayBackgroundColor;
 	private int colorMultiplier;
+
+	// Constants
 	private const int OBAQUE_VALUE = 255;
-	private readonly string LOADING_STATEMENT = "Loading...";
-	//private readonly string NEXT_ROUND_STATEMENT = "Next Round";
-	private Color loadingBtnTextDefaultColor;
 	private string CURRENT_PLAYER_SCORE_PREF = "currentPlayerScore";
 
 	// Current Round Data and Results
@@ -50,12 +48,11 @@ public class QuestioningController : MonoBehaviour {
             created = true;
 			playerScore = 0;
 			PlayerPrefs.SetInt(CURRENT_PLAYER_SCORE_PREF, playerScore);
-			UnityEngine.Debug.Log("I am here in Start in GameController for first Creation.");
+			UnityEngine.Debug.Log("Here in Start in GameController for first Creation.");
         }
 		
 		dataController = FindObjectOfType<DataController>();
-		loadingBtnTextDefaultColor = nextRoundBtn.GetComponentInChildren<Text>().color;
-		UnityEngine.Debug.Log("I am here in Start in GameController.");
+		UnityEngine.Debug.Log("Here in Start in GameController.");
 		InitRound();
 		
 	}
@@ -66,12 +63,10 @@ public class QuestioningController : MonoBehaviour {
 		playerScore = PlayerPrefs.GetInt(CURRENT_PLAYER_SCORE_PREF);
 		scoreDisplayText.text = playerScore.ToString();
 
-		loadingLearningData = true;
 		while(!dataController.isQuestionSetLoaded() || !dataController.isLearning());
 		
 		questionDisplay.SetActive(true);
 		roundEndDisplay.SetActive(false);
-		loadingLearningData = false;
 
 		currentQuestionSet = dataController.GetCurrentQuestionSet();
 		currentAnswers = new ArrayList();
@@ -113,7 +108,7 @@ public class QuestioningController : MonoBehaviour {
 
 				if(dataController.isLearningSetLoaded()) {
 					nextRoundBtn.enabled = true;
-					nextRoundBtn.GetComponentInChildren<Text>().text = NEXT_ROUND_STATEMENT;
+					nextRoundBtn.GetComponentInChildren<Text>().text = "Next Round";
 					loadingLearningData = false;
 					nextRoundBtn.GetComponentInChildren<Text>().color = loadingBtnTextDefaultColor;
 
@@ -135,7 +130,7 @@ public class QuestioningController : MonoBehaviour {
 		if(answer.isCorrect) {
 			playerScore += currentQuestionSet.pointsAddedForCorrectAnswer;
 			scoreDisplayText.text = playerScore.ToString();
-
+			
 		}
 
 		currentAnswers.Add(answer);
@@ -161,7 +156,7 @@ public class QuestioningController : MonoBehaviour {
 	
 
 	public void EndRound() {
-		nextRoundBtn.GetComponentInChildren<Text>().text = LOADING_STATEMENT;
+		nextRoundBtn.GetComponentInChildren<Text>().text = "Loading..";
 
 		isRoundActive = false;
 
@@ -170,7 +165,7 @@ public class QuestioningController : MonoBehaviour {
 		
 		questionDisplay.SetActive(false);
 		roundEndDisplay.SetActive(true);
-
+		SceneManager.LoadScene("Loading");
 		nextRoundBtn.enabled = false;
 		dataController.GameFinished(currentAnswers);
 		ClearPastRoundCache();
