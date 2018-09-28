@@ -31,27 +31,28 @@ public class DataController : MonoBehaviour {
 	private static string PYTHON_3_PATH  = @"C:\ProgramData\Anaconda3\python.exe";
 	private static string PYTHON_27_32_PATH = @"C:\ProgramData\Anaconda3\pkgs32\python-2.7.15-he216670_0\python.exe";
 	private static string SIGNALS_TRACKER_SERVER_FILE_NAME = @"Backend\CyKITv2\CyKITv2.py";
-	private static string SIGNALS_TRACKER_SERVER_PATH;
+	private string SIGNALS_TRACKER_SERVER_PATH;
 	private static string MY_COLORS_BACK_MAIN_FILE_NAME = @"Backend\MyColorsBack.py";
-	private static string MY_COLORS_BACK_PATH;
+	private string MY_COLORS_BACK_PATH;
 	private static string BACK_LEARNING_DATA_GENERATION_COMMAND = "GenerateLearningData";
 	private static string BACK_QUESTIONS_DATA_GENERATION_COMMAND = "GenerateColorsQuestions";
 	private static string BACK_ERRORS_CALCULATION_COMMAND = "CaculateErrors";
 	private static string UPDATED_QUESTIONS_DATA_FILE_NAME = "updated_questions_data.json";
-	private static string UPDATED_QUESTIONS_DATA_PATH;
+	private string UPDATED_QUESTIONS_DATA_PATH;
 	private static string UPDATED_LEARNING_DATA_FILE_NAME = "updated_learning_data.json";
-	private static string UPDATED_LEARNING_DATA_PATH;
-	private static string THIS_GAME_FOLDERNAME;
-	private static string THIS_GAME_DATA_PATH;
+	private string UPDATED_LEARNING_DATA_PATH;
+	private string THIS_GAME_FOLDERNAME;
+	private string THIS_GAME_DATA_PATH;
 	private static string PAST_ANSWERS_FILE_NAME = "past_answers.csv";
-	private static string PAST_ANSWERS_DATA_PATH;
+	private string PAST_ANSWERS_DATA_PATH;
 	private static string PAST_COLORS_FILE_NAME = "past_colors.json";
-	private static string PAST_COLORS_DATA_PATH;
+	private string PAST_COLORS_DATA_PATH;
 	private static string SESSION_ERRORS_FILE_NAME = "session_errors.json";
-	private static string SESSION_ERRORS_DATA_PATH;
-	private static string APP_STREAMING_ASSETS_PATH;
-	private static string APP_DATA_PATH;
+	private string SESSION_ERRORS_DATA_PATH;
+	private string APP_STREAMING_ASSETS_PATH;
+	private string APP_DATA_PATH;
 	private static string SIGNALS_RECORD = "eeg_record_";
+	public string EEG_LOGS_PATH;
 
 	protected bool serverIntialized = false;
 	protected bool signalsTrackerConnected = false;
@@ -77,13 +78,16 @@ public class DataController : MonoBehaviour {
 		PAST_COLORS_DATA_PATH = Path.Combine(APP_DATA_PATH, PAST_COLORS_FILE_NAME);
 		SESSION_ERRORS_DATA_PATH = Path.Combine(APP_DATA_PATH, SESSION_ERRORS_FILE_NAME);
 
+		EEG_LOGS_PATH = Path.Combine(APP_DATA_PATH, @"EEG-Logs/");
+
+
 		loadingData = true;
 		SceneManager.LoadScene("Loading");
 
 		loadingController = FindObjectOfType<LoadingController>();
 
 		Thread dataInitThread = new Thread(new ThreadStart(Init));
-		dataInitThread.Start();	
+		dataInitThread.Start();
 	}
 
 	public void Init() {
@@ -103,8 +107,14 @@ public class DataController : MonoBehaviour {
 		ClearPreviousCachedData();
 		UnityEngine.Debug.Log("All Previous cached data have been deleted successfully.");
 
-		LoadGameData();	
+		
+		MakeGameReady();
 		UnityEngine.Debug.Log("Game data Loader has been started and learning set has been observed successfully.");
+	}
+
+	private void MakeGameReady() {
+		ShiftOneLearningPhase();
+		LoadGameData();
 	}
 
 	void InitSignals() {
@@ -112,7 +122,7 @@ public class DataController : MonoBehaviour {
 		signalsTrackerServerThread.Start();
 		UnityEngine.Debug.Log("Signals Tracker Server should be up and running.");
 
-		signalsTracker = new SignalsTrackerConnection();
+		signalsTracker = new SignalsTrackerConnection(this);
 		signalsTracker.ConnectToTcpServer();
 	}
 
@@ -134,7 +144,7 @@ public class DataController : MonoBehaviour {
 		UnityEngine.Debug.Log("System is about to quit..and abort server thread with it.");
 		if (signalsTrackerServerThread != null) 
 			signalsTrackerServerThread.Abort();
-		if (signalsTrackerServerThread != null)
+		if (signalsTracker!= null)
 			signalsTracker.AbortThreads();
 	}
 
@@ -166,7 +176,6 @@ public class DataController : MonoBehaviour {
 		backProcessStartInfo.RedirectStandardOutput = true;
 		backProcessStartInfo.RedirectStandardError = true;
 		
-		string EEG_LOGS_PATH = Path.Combine(APP_DATA_PATH, @"EEG-Logs\");
 		backProcessStartInfo.Arguments = 
 			string.Format("\"{0}\" \"{1}\"", SIGNALS_TRACKER_SERVER_PATH, EEG_LOGS_PATH);
 		
@@ -193,11 +202,12 @@ public class DataController : MonoBehaviour {
 				
 		}
 
+		/*
 		if (signalsTrackerServerProcess != null) {
 			// Waiting for exit signal from the Back Process			
 			signalsTrackerServerProcess.WaitForExit();
 			signalsTrackerServerProcess.Close();
-		}
+		}*/
 		
 		UnityEngine.Debug.Log("Signals Tracker Server loaded successfully");
 	}
@@ -288,20 +298,9 @@ public class DataController : MonoBehaviour {
 		signalsTracker.StopRecord();
 	}
 
-	public void LoadNextPhase() {
-		LearningPhaseFinished();
-		StopRecordingSignals();
-		if(MAX_NUM_OF_PHASES > 0) {
-			StartRecordingSignals();
-		}
-		LoadGameData();
-	}
-
 	public void LoadGameData() {
-		LearningPhaseFinished();
-		MAX_NUM_OF_PHASES--;
 		
-		if(MAX_NUM_OF_PHASES >= 0) {
+		if(MAX_NUM_OF_PHASES > 0) {
 			LoadLearningSet();
 		} else {
 			UnityEngine.Debug.Log("This was the last load of Learning Sets..Set #" +
@@ -312,10 +311,26 @@ public class DataController : MonoBehaviour {
 		
 	}
 
-	private void LearningPhaseFinished() {
-		currentQuestionSet = null;
+	public void ShiftOneLearningPhase() {
 		currentLearningSet = null;
+		currentQuestionSet = null;
+
 		colorSetNum++;
+		MAX_NUM_OF_PHASES--;
+		UnityEngine.Debug.Log("ShiftOneLearningPhase: data cleared to be ready for a new phase.");
+	}
+
+	public void LearningPhaseDoneOrToBegin() {
+		
+		ShiftOneLearningPhase();
+
+		StopRecordingSignals();
+		if(MAX_NUM_OF_PHASES > 0) {
+			StartRecordingSignals();
+		} else {
+			UnityEngine.Debug.Log("LearningPhaseDoneOrToBegin: This was last phase.");
+		}
+		LoadGameData();
 	}
 
 	public void GameFinished(ArrayList roundAnswers) {

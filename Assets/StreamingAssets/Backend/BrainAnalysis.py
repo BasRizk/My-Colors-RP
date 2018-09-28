@@ -19,7 +19,7 @@ def analyze_past_learning_data(num_of_support_vectors = 5, verbose = False):
     X, y = match_signals_as_colors(recent_signals, recent_learned_colors, signals_format='CyKIT')
     y  = y.reshape(-1,1)
     
-    X = backward_eliminate_features(X, y, 0.05, 'pValues', verbose)
+    X = backward_eliminate_features(X, y, 0.05, 'pValues+rSquared', verbose)
     
     # Feature Scaling
     from sklearn.preprocessing import StandardScaler
@@ -86,7 +86,7 @@ def get_colors_by_brain_analysis(num_of_colors, verbose=False):
         print('Balancing Colors observed seems to be very few')
         new_balancing_colors = reverse_predicted_colors
     
-    document_analysis_data(reversed_support_vectors, new_balancing_colors)
+    document_analysis_data(support_vectors, reversed_support_vectors)
     
     return new_balancing_colors
 

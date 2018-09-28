@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -9,18 +10,26 @@ using UnityEngine;
 public class SignalsTrackerConnection{
 
 	#region private members 	
-	//private DataController dataController;
+	private DataController dataController;
 	private TcpClient socketConnection; 
 	private Thread clientReceiveThread; 
 	private string ip_address = "localhost";
 	private int port_num = 18000;	
 	public int maxTries = 5;
 
-	/*
+	private string currentRecordFile;
+	private bool recording;
+	private List<string> singleRecordFileData;
+	private string RECORDINGS_PATH;
+
+	
 	public SignalsTrackerConnection(DataController appDataController) {
-		//dataController = appDataController;
+		dataController = appDataController;
+		RECORDINGS_PATH = dataController.EEG_LOGS_PATH;
+		singleRecordFileData = new List<string>();
+		recording = false;
 	}
-	*/
+	
 
 	//private float timeoutAfter;
 	#endregion  	
@@ -82,8 +91,21 @@ public class SignalsTrackerConnection{
 						Array.Copy(bytes, 0, incommingData, 0, length); 						
 						// Convert byte array to string message. 						
 						string serverMessage = Encoding.ASCII.GetString(incommingData); 
-						if (serverMessage.Split(',').Length < 5)				
-							Debug.Log("server message received as: " + serverMessage); 							
+						if (serverMessage.Split(',').Length < 5) {
+							Debug.Log("server message received as: " + serverMessage); 
+						} else {
+							if(recording) {
+								singleRecordFileData.Add(serverMessage);
+								Debug.Log("Data received = " + serverMessage);
+							} else {
+								if(singleRecordFileData != null && singleRecordFileData.Count != 0) {
+									CreateRecordFile();
+									singleRecordFileData.Clear();
+									Debug.Log("File should be created");
+
+								}
+							}
+						}						
 					} 				
 				} 			
 			}
@@ -91,7 +113,20 @@ public class SignalsTrackerConnection{
 		catch (SocketException socketException) {             
 			Debug.Log("Socket exception: " + socketException);         
 		}     
-	}  	
+	} 
+
+	private void CreateRecordFile() {
+		Debug.Log("Creating new record file"); 
+		var csv = new StringBuilder();
+		var newLine = ""; 
+		foreach (string record in singleRecordFileData) {
+			newLine = record;
+			csv.AppendLine(newLine);  
+		}
+
+		string records_file_path = Path.Combine(RECORDINGS_PATH, currentRecordFile + ".csv");
+		File.AppendAllText(records_file_path, csv.ToString());
+	} 	
 
 	/// <summary> 	
 	/// Send message to server using socket connection. 	
@@ -120,11 +155,13 @@ public class SignalsTrackerConnection{
     	//byte[] data = Encoding.ASCII.GetBytes("CyKITv2:::RecordStart:::"+ filename);
 		//stream.Write(data, 0, data.Length);
 		SendMessage("CyKITv2:::RecordStart:::"+ filename);
-
+		//currentRecordFile = filename;
+		//recording = true;
 	}
 	public void StopRecord() {
 		//byte[] data = Encoding.ASCII.GetBytes("CyKITv2:::RecordStop");
 		SendMessage("CyKITv2:::RecordStop");
+		//recording = false;
 	}
 	public void closeConnection(){
 		socketConnection.Close();

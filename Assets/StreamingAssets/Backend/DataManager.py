@@ -124,6 +124,7 @@ def get_brain_signals_data():
     data_path = _get_brain_signals_data_path()
     allFiles = glob.glob(data_path + "/*.csv")
     allFiles.sort()
+    allFiles = allFiles[:]
     frame = pd.DataFrame()
     list_ = []
     for file_ in allFiles:
@@ -144,7 +145,9 @@ def _get_brain_signals_data_path():
 
 def _create_data_path(file_or_foldername):
     data_folder = _ensure_dir(os.path.join(_get_app_path(), 'Data'))
-    return os.path.join(data_folder, file_or_foldername)
+    pathCreated = os.path.join(data_folder, file_or_foldername)
+    print('Data path created == ', pathCreated)
+    return pathCreated
 
 def get_past_learned_colors_path():
     return _create_data_path('past_colors.json')

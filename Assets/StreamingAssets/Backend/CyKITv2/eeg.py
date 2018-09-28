@@ -57,7 +57,7 @@ class MyIO():
         self.samplingRate = 128
         self.channels = 40
         self.f = None
-        self.eegLogsDirectory = "EEG-Logs"
+        self.eegLogsDirectory = "EEG-Logs/"
         
     def onData(self, uid, text):
         print '@eeg -- onData(), text ==', str(text.split(":::"))
@@ -99,9 +99,9 @@ class MyIO():
                 
                 ## @basem addition to ensure path as program may run from far away
                 #directory = os.path.dirname('self.eegLogsDirectory')
-                directory = self.eegLogsDirectory
-                if not os.path.exists(directory):
-                    os.makedirs(directory)
+                directory = "C:/Users/Xbass/Documents/My-Colors-Project/Assets/StreamingAssets/Data/EEG-Logs/"
+                #if not os.path.exists(directory):
+                #   os.makedirs(directory)
                 
                 print 'Directory to save into : ', directory
                 pathFinder = directory + self.recordFile + '.csv'
