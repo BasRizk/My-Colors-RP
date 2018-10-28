@@ -1,6 +1,10 @@
 # My-Colors
+An adaptive Colors Quiz based educative (game) system, that lets people of any age learn about colors through the mapping of each color with the color’s name in English. Frequently through the run-time, the system changes the next colors to learn set based on the players’ affections (brain signals). The research aims to test a hypothesis of higher user performance by making use of the correlation between colors and brain signals to apply some mechanism to generate colors through the runtime that reflects a balance of load on the brain.
+The Project at the end consists of three major parts:
 
-An educative system about colors, acting as a research project that aims to increase the performance of player through the different an adaptive set of colors according to human affections (observed through Brain Signals). It is been worked on through the undergraduate research group of "Media Engineering and Technology" students in the "German University in Cairo".
+        1- Unity Engine made interface for the view of the game “System”.
+        2- Python 3 scripts to handle backend manipulations and data analysis and creations.
+        3- Python 2 scripts “CyKITv2”, working as a server that tracks signals received from Emotiv Epoc+.
 
 
 # APIs Used
