@@ -1,7 +1,7 @@
 # My-Colors
 An adaptive Colors Quiz based educative (game) system, that lets people of any age learn about colors through the mapping of each color with the color’s name in English. Frequently through the run-time, the system changes the next colors to learn set based on the players’ affections (brain signals). The research aims to test a hypothesis of higher user performance by making use of the correlation between colors and brain signals to apply some mechanism to generate colors through the runtime that reflects a balance of load on the brain.
 
-The Project at the end consists of three major parts:
+The Project currently consists of three major parts:
 
         1- Unity Engine made interface for the view of the game “System”.
         2- Python 3 scripts to handle backend manipulations and data analysis and creations.
